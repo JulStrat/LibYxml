@@ -1,0 +1,5 @@
+yxml_t      KEYWORD1
+yxml_ret_t  KEYWORD1
+yxml_init   KEYWORD2
+yxml_parse  KEYWORD2
+yxml_eof    KEYWORD2
