@@ -1,15 +1,33 @@
+/*
+  Parsing XML file from SD card example sketch
+
+  sat.xml  - https://github.com/OpenPLi/tuxbox-xml/blob/master/xml/satellites.xml
+  
+  Put file sat.xml on SD card. Connect to Ardino board.
+  Compile and upload sketch. Open Serial Monitor.
+
+  Board: Arduino Uno
+  SD card: SDHC 7.31Gb FAT32, sectorsPerCluster - 64
+  SD chip select pin: 10
+  Arduino IDE Serial Monitors settings: 115200 baud, no line ending.
+
+  Created by Ioulianos Kakoulidis, 2021.
+  This example code is in the Public Domain.
+*/
+
+#include <SPI.h>
+#include <SD.h>
 #include <yxml.h>
+
+unsigned long startMillis;
+
+File fxml;
 
 int c;
 yxml_ret_t r;
 yxml_t x[1];
-char stack[32];
+char stack[64];
 int verbose = 0;
-
-const char *xml = "<class><person genre=\"female\" age=\"26\"><firstname>Anna</firstname><lastname>Smith</lastname></person>"
-"<person genre=\"male\" age=\"50\"><firstname>James</firstname><lastname>Bond</lastname></person>"
-"<person genre=\"male\" age=\"31\"><firstname>Bob</firstname><lastname>Anderson</lastname></person></class>";
-
 
 void y_printchar(char c) {
   if(c == '\x7F' || (c >= 0 && c < 0x20)) {
@@ -89,26 +107,38 @@ void y_printres(yxml_t *x, yxml_ret_t r) {
   indata = nextdata;
 }
 
+
 void setup() {
-  Serial.begin(9600);
-  Serial.print(xml); 
-  Serial.println(""); 
-  
-  test();
-}
-
-void test() {
-  yxml_init(x, stack, sizeof(stack));
-
-  while (*xml) {
-    r = yxml_parse(x, *xml);
-    y_printres(x, r);
-    xml++;
+  Serial.begin(115200);
+  while (!Serial) {
+    ;
   }
 
-  y_printtoken(x, yxml_eof(x) < 0 ? "error\n" : "ok\n");
+  if (SD.begin(10)) {
+    Serial.println("SPI OK.");
+  }
+  else {
+    Serial.println("SPI error.");
+    while (true) {
+      ;
+    }
+  }
+
+  if (fxml = SD.open("sat.xml")) {
+    yxml_init(x, stack, sizeof(stack));
+
+    while ((c = fxml.read()) != -1) {
+      r = yxml_parse(x, c);
+      y_printres(x, r);
+    }
+
+    y_printtoken(x, yxml_eof(x) < 0 ? "error\n" : "ok\n");
+    fxml.close();
+  }
+  else {
+    Serial.println("Can't open satellites.xml file.");
+  }
 }
 
 void loop() {
-
 }
